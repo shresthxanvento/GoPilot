@@ -1,1 +1,4 @@
 WARN: High memory usage detected
+WARN: CPU temperature rising
+ERROR: Database connection timeout in main.go:42
+CRITICAL: Out of Memory (OOM) killer invoked
