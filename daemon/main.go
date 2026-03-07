@@ -40,7 +40,6 @@ var appLogs = &LogBuffer{
 	lines: make([]string, 0, MaxLogLine),
 }
 
-// Log Tailer Worker
 func tailLogs(filePath string) {
 	t, err := tail.TailFile(filePath, tail.Config{
 		Follow:    true,
@@ -59,7 +58,6 @@ func tailLogs(filePath string) {
 	}
 }
 
-// Hardware Metrics
 type SystemStats struct {
 	CPUUsage    float64 `json:"cpu_usage"`
 	MemoryUsage float64 `json:"memory_usage"`
@@ -80,7 +78,6 @@ func getHealthMetrics() SystemStats {
 	}
 }
 
-// Main server
 func main() {
 	go tailLogs("test.log")
 	gin.SetMode(gin.ReleaseMode)
