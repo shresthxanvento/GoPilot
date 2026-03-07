@@ -4,7 +4,7 @@ from mcp.server.fastmcp import FastMCP
 
 #1. Initialise a MCP Server
 mcp = FastMCP("Healer Bridge")
-DAEMON_URL = "http://127.0.0.1:8080"
+DAEMON_URL = "http://daemon:8080"
 
 #2. Setup secure queue for fixes
 def init_db():

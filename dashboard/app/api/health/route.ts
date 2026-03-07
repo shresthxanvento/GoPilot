@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const res = await fetch('http://127.0.0.1:8080/api/v1/health', { cache: 'no-store' });
+    const res = await fetch('http://daemon:8080/api/v1/health', { cache: 'no-store' });
     if (!res.ok) throw new Error('Daemon unreachable');
     const data = await res.json();
     return NextResponse.json(data);

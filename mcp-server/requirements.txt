@@ -1,7 +1,7 @@
 mcp[cli]
 requests
 langchain 
-langchain-google-genai 
 langchain-mcp-adapters 
 python-dotenv
 langgraph
+langchain-groq

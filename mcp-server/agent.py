@@ -1,19 +1,24 @@
 import asyncio
+import os
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
 
 load_dotenv()
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+llm = ChatGroq(
+    api_key=os.getenv("GROQ_API_KEY"),
+    model="llama-3.3-70b-versatile",
+    temperature=0,
+)
 
 system_message = """You are an elite autonomous DevOps AI. 
-Your job is to monitor system health and read logs to find anomalies, then propose a bash command to fix them.
+Your job is to monitor system health and read logs to find anomalies.
 Step 1: ALWAYS use the 'get_system_health' tool.
 Step 2: ALWAYS use the 'get_recent_logs' tool to check for 'ERROR', 'WARN', or 'CRITICAL' tags.
-Step 3: If you see a critical error in the logs or high resource usage, use 'propose_fix' to queue a safe bash command to resolve the issue.
-If the health is fine AND the logs are clean, respond with 'System Stable'."""
+Step 3: If and ONLY if you find a real error or high usage, use the 'propose_fix' tool to queue a bash command. 
+CRITICAL RULE: If the system is healthy and logs are clean, DO NOT use the 'propose_fix' tool under any circumstances. Simply reply with the plain text "System Stable"."""
 
 async def run_healer_loop():
     client = MultiServerMCPClient({

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ShieldAlert, Activity, CheckCircle2, XCircle, Terminal, Cpu, HardDrive } from 'lucide-react';
+import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip } from 'recharts';
 
 type PendingFix = { id: number; command: string; status: string; };
 type HealthStats = { cpu_usage: number; memory_usage: number; };
@@ -11,8 +12,10 @@ export default function ControlRoom() {
   const [history, setHistory] = useState<PendingFix[]>([]);
   const [stats, setStats] = useState({ approved: 0, rejected: 0 });
   const [health, setHealth] = useState<HealthStats>({ cpu_usage: 0, memory_usage: 0 });
+  const [chartData, setChartData] = useState<any[]>([]);
 
   const fetchData = async () => {
+    // 1. Fetch Database Records
     const dbRes = await fetch('/api/approvals');
     const dbData = await dbRes.json();
     if (dbData.pending) {
@@ -20,10 +23,20 @@ export default function ControlRoom() {
       setHistory(dbData.history);
       setStats({ approved: dbData.approvedCount, rejected: dbData.rejectedCount });
     }
+    
+    // 2. Fetch Live System Health
     const healthRes = await fetch('/api/health');
     if (healthRes.ok) {
       const healthData = await healthRes.json();
       setHealth(healthData);
+      
+      // Update rolling chart data (last 20 ticks)
+      const timeNow = new Date().toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' });
+      setChartData(prev => [...prev.slice(-19), { 
+        time: timeNow, 
+        cpu: healthData.cpu_usage || 0, 
+        mem: healthData.memory_usage || 0 
+      }]);
     }
   };
 
@@ -39,13 +52,14 @@ export default function ControlRoom() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, action }),
     });
-    fetchData(); // Instantly refresh
+    fetchData(); // Instantly refresh UI
   };
 
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-gray-100 p-8 font-mono selection:bg-blue-500/30">
       <div className="max-w-7xl mx-auto">
         
+        {/* --- HEADER --- */}
         <header className="mb-10 border-b border-gray-800 pb-6">
           <div className="flex items-center gap-3">
             <Activity className="w-8 h-8 text-blue-500" />
@@ -59,10 +73,13 @@ export default function ControlRoom() {
           </p>
         </header>
 
+        {/* --- MAIN GRID LAYOUT --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
+          {/* LEFT COLUMN: ALERTS & HISTORY */}
           <div className="lg:col-span-2 space-y-8">
             
+            {/* Alerts Section */}
             <section>
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-200">
                 <ShieldAlert className="w-5 h-5 text-yellow-500" /> Pending AI Interventions
@@ -141,28 +158,27 @@ export default function ControlRoom() {
           {/* RIGHT COLUMN: TELEMETRY & STATS */}
           <div className="space-y-6">
             
-            {/* Live Telemetry */}
+            {/* Live Telemetry with Charts */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
-              <h2 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-6 border-b border-gray-800 pb-2">Live Telemetry</h2>
+              <h2 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-4 border-b border-gray-800 pb-2">Live Telemetry</h2>
               
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="flex items-center gap-2 text-gray-300"><Cpu className="w-4 h-4 text-blue-400" /> CPU Load</span>
-                  <span className="text-blue-400 font-bold">{health.cpu_usage.toFixed(1)}%</span>
-                </div>
-                <div className="w-full bg-gray-950 rounded-full h-2.5 border border-gray-800 overflow-hidden">
-                  <div className="bg-blue-500 h-2.5 transition-all duration-1000 ease-out" style={{ width: `${Math.min(health.cpu_usage, 100)}%` }}></div>
-                </div>
+              <div className="h-48 w-full mb-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <YAxis domain={[0, 100]} hide />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#0a0a0a', borderColor: '#333' }}
+                      itemStyle={{ color: '#fff' }}
+                    />
+                    <Line type="monotone" dataKey="cpu" stroke="#3b82f6" strokeWidth={3} dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="mem" stroke="#a855f7" strokeWidth={3} dot={false} isAnimationActive={false} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="flex items-center gap-2 text-gray-300"><HardDrive className="w-4 h-4 text-purple-400" /> Memory Usage</span>
-                  <span className="text-purple-400 font-bold">{health.memory_usage.toFixed(1)}%</span>
-                </div>
-                <div className="w-full bg-gray-950 rounded-full h-2.5 border border-gray-800 overflow-hidden">
-                  <div className="bg-purple-500 h-2.5 transition-all duration-1000 ease-out" style={{ width: `${Math.min(health.memory_usage, 100)}%` }}></div>
-                </div>
+              <div className="flex justify-between items-center text-sm font-bold">
+                <span className="text-blue-400 flex items-center gap-2"><Cpu className="w-4 h-4" /> CPU: {(health.cpu_usage || 0).toFixed(1)}%</span>
+                <span className="text-purple-400 flex items-center gap-2"><HardDrive className="w-4 h-4" /> MEM: {(health.memory_usage || 0).toFixed(1)}%</span>
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import {exec} from 'child_process'
 
 const dbPath = path.resolve(process.cwd(), '../mcp-server/approvals.db');
 
@@ -23,12 +24,29 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const { id, action } = await req.json();
+  
   return new Promise((resolve) => {
     const db = new sqlite3.Database(dbPath);
-    db.run("UPDATE pending_fixes SET status = ? WHERE id = ?", [action, id], function(err) {
-      db.close();
-      if (err) return resolve(NextResponse.json({ error: err.message }, { status: 500 }));
-      resolve(NextResponse.json({ success: true }));
+    
+    db.get("SELECT command FROM pending_fixes WHERE id = ?", [id], (err, row: any) => {
+      if (err || !row) {
+          db.close();
+          return resolve(NextResponse.json({ error: "Command not found" }, { status: 404 }));
+      }
+
+      if (action === 'APPROVED') {
+        console.log(`🚀 Executing command: ${row.command}`);
+        exec(row.command, (execError, stdout, stderr) => {
+          if (execError) console.error(`Execution failed: ${stderr}`);
+          else console.log(`Execution success: ${stdout}`);
+        });
+      }
+
+      db.run("UPDATE pending_fixes SET status = ? WHERE id = ?", [action, id], function(updateErr) {
+        db.close();
+        if (updateErr) return resolve(NextResponse.json({ error: updateErr.message }, { status: 500 }));
+        resolve(NextResponse.json({ success: true }));
+      });
     });
   });
 }

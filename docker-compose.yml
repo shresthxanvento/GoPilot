@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  daemon:
+    build: ./daemon
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/GoPilot
+    working_dir: /GoPilot/daemon
+    # pid: "host" allows Go to read the actual Mac CPU, not just the Docker container CPU
+    pid: "host"
+
+  mcp-server:
+    build: ./mcp-server
+    volumes:
+      - ./:/GoPilot
+    working_dir: /GoPilot/mcp-server
+    env_file:
+      - ./mcp-server/.env
+    depends_on:
+      - daemon
+
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/GoPilot
+      # CRITICAL FIX: Prevent Mac folders from overwriting the container's Linux bindings
+      - /GoPilot/dashboard/node_modules
+      - /GoPilot/dashboard/.next
+    working_dir: /GoPilot/dashboard
+    depends_on:
+      - mcp-server
