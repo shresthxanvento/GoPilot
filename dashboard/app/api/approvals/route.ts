@@ -35,6 +35,9 @@ export async function POST(req: Request) {
       }
 
       if (action === 'APPROVED') {
+        // SECURITY NOTE: In a production environment, executing arbitrary database 
+        // strings via exec() is an RCE vulnerability. An enterprise version of this 
+        // would use a strict AllowList of commands or execute inside a sandboxed worker.
         console.log(`🚀 Executing command: ${row.command}`);
         exec(row.command, (execError, stdout, stderr) => {
           if (execError) console.error(`Execution failed: ${stderr}`);

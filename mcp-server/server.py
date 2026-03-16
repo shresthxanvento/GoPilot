@@ -4,12 +4,13 @@ from mcp.server.fastmcp import FastMCP
 
 #1. Initialise a MCP Server
 mcp = FastMCP("Healer Bridge")
-DAEMON_URL = "http://daemon:8080"
+DAEMON_URL = "http://localhost:8080"
 
 #2. Setup secure queue for fixes
 def init_db():
     conn = sqlite3.connect("approvals.db")
     cursor = conn.cursor()
+    cursor.execute('PRAGMA journal_mode=WAL;')
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS pending_fixes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
