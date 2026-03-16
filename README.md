@@ -19,8 +19,8 @@ graph TD
 
     subgraph "1. The Eyes: Daemon (Go)"
         GoSensor[Gin REST API :8080]
-        Logs -->|Tails (nxadm/tail)| GoSensor
-        Metrics -->|Reads (gopsutil)| GoSensor
+        Logs -->|"Tails (nxadm/tail)"| GoSensor
+        Metrics -->|"Reads (gopsutil)"| GoSensor
     end
 
     subgraph "2. The Brain: AI Agent (Python)"
@@ -28,8 +28,8 @@ graph TD
         LangGraph[LangGraph React Agent]
         LLM((Groq / Llama 3.3 70B))
 
-        GoSensor -->|REST Fetch| MCP
-        MCP <-->|Tool Calls| LangGraph
+        GoSensor -->|"REST Fetch"| MCP
+        MCP <-->|"Tool Calls"| LangGraph
         LangGraph <--> LLM
     end
 
@@ -38,9 +38,9 @@ graph TD
         UI[React Telemetry UI :3000]
         Exec[Node.js child_process]
 
-        MCP -->|Queues Proposed Fix| SQLite
-        SQLite -->|Polls Pending State| UI
-        UI -->|Human Approves| Exec
+        MCP -->|"Queues Proposed Fix"| SQLite
+        SQLite -->|"Polls Pending State"| UI
+        UI -->|"Human Approves"| Exec
     end
 
-    Exec -.->|Executes Bash Fix| Metrics
+    Exec -.->|"Executes Bash Fix"| Metrics
